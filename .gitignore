@@ -60,3 +60,10 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+#data
+data
+data/*
+
+# ubuntu temp file
+*~
