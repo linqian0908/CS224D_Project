@@ -14,100 +14,24 @@ Time per epoch: 3s on CPU (core i7).
 '''
 
 from __future__ import print_function
+from functools import reduce
+
+import numpy as np
+
 from keras.models import Sequential
 from keras.layers.embeddings import Embedding
 from keras.layers.core import Activation, Dense, Merge, Permute, Dropout
 from keras.layers.recurrent import LSTM
 from keras.utils.data_utils import get_file
 from keras.preprocessing.sequence import pad_sequences
-from functools import reduce
-import tarfile
-import numpy as np
-import re
 
-
-def tokenize(sent):
-    '''Return the tokens of a sentence including punctuation.
-
-    >>> tokenize('Bob dropped the apple. Where is the apple?')
-    ['Bob', 'dropped', 'the', 'apple', '.', 'Where', 'is', 'the', 'apple', '?']
-    '''
-    return [x.strip() for x in re.split('(\W+)?', sent) if x.strip()]
-
-
-def parse_stories(lines, only_supporting=False):
-    '''Parse stories provided in the bAbi tasks format
-
-    If only_supporting is true, only the sentences that support the answer are kept.
-    '''
-    data = []
-    story = []
-    for line in lines:
-        line = line.decode('utf-8').strip()
-        nid, line = line.split(' ', 1)
-        nid = int(nid)
-        if nid == 1:
-            story = []
-        if '\t' in line:
-            q, a, supporting = line.split('\t')
-            q = tokenize(q)
-            substory = None
-            if only_supporting:
-                # Only select the related substory
-                supporting = map(int, supporting.split())
-                substory = [story[i - 1] for i in supporting]
-            else:
-                # Provide all the substories
-                substory = [x for x in story if x]
-            data.append((substory, q, a))
-            story.append('')
-        else:
-            sent = tokenize(line)
-            story.append(sent)
-    return data
-
-
-def get_stories(f, only_supporting=False, max_length=None):
-    '''Given a file name, read the file, retrieve the stories, and then convert the sentences into a single story.
-
-    If max_length is supplied, any stories longer than max_length tokens will be discarded.
-    '''
-    data = parse_stories(f.readlines(), only_supporting=only_supporting)
-    flatten = lambda data: reduce(lambda x, y: x + y, data)
-    data = [(flatten(story), q, answer) for story, q, answer in data if not max_length or len(flatten(story)) < max_length]
-    return data
-
-
-def vectorize_stories(data, word_idx, story_maxlen, query_maxlen):
-    X = []
-    Xq = []
-    Y = []
-    for story, query, answer in data:
-        x = [word_idx[w] for w in story]
-        xq = [word_idx[w] for w in query]
-        y = np.zeros(len(word_idx) + 1)  # let's not forget that index 0 is reserved
-        y[word_idx[answer]] = 1
-        X.append(x)
-        Xq.append(xq)
-        Y.append(y)
-    return (pad_sequences(X, maxlen=story_maxlen),
-            pad_sequences(Xq, maxlen=query_maxlen), np.array(Y))
-
-
-path = '../data/babi/'
-
-challenges = {
-    # QA1 with 10,000 samples
-    'single_supporting_fact': 'en/qa1_single-supporting-fact_{}.txt',
-    # QA2 with 10,000 samples
-    'two_supporting_fact': 'en/qa2_two-supporting-facts_{}.txt',
-}
-challenge_type = 'single_supporting_fact'
-challenge = challenges[challenge_type]
+from data_utils.babi import *
 
 print('Extracting stories for the challenge:', challenge_type)
-train_stories = get_stories(open(path+challenge.format('train')))
-test_stories = get_stories(open(path+challenge.format('test')))
+path = './data/babi/'
+challenge = path+'en/qa1_single-supporting-fact_{}.txt'
+train = get_stories(open(challenge.format('train'),'r'))
+test = get_stories(open(challenge.format('test'),'r'))
 
 vocab = sorted(reduce(lambda x, y: x | y, (set(story + q + [answer]) for story, q, answer in train_stories + test_stories)))
 # Reserve 0 for masking via pad_sequences
