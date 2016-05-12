@@ -26,34 +26,32 @@ from keras.utils.data_utils import get_file
 from keras.preprocessing.sequence import pad_sequences
 
 from data_utils.babi import *
-
-print('Extracting stories for the challenge:', challenge_type)
 path = './data/babi/'
 challenge = path+'en/qa1_single-supporting-fact_{}.txt'
 train = get_stories(open(challenge.format('train'),'r'))
 test = get_stories(open(challenge.format('test'),'r'))
 
-vocab = sorted(reduce(lambda x, y: x | y, (set(story + q + [answer]) for story, q, answer in train_stories + test_stories)))
+vocab = sorted(reduce(lambda x, y: x | y, (set(story + q + [answer]) for story, q, answer in train + test)))
 # Reserve 0 for masking via pad_sequences
 vocab_size = len(vocab) + 1
-story_maxlen = max(map(len, (x for x, _, _ in train_stories + test_stories)))
-query_maxlen = max(map(len, (x for _, x, _ in train_stories + test_stories)))
+story_maxlen = max(map(len, (x for x, _, _ in train + test)))
+query_maxlen = max(map(len, (x for _, x, _ in train + test)))
 
 print('-')
 print('Vocab size:', vocab_size, 'unique words')
 print('Story max length:', story_maxlen, 'words')
 print('Query max length:', query_maxlen, 'words')
-print('Number of training stories:', len(train_stories))
-print('Number of test stories:', len(test_stories))
+print('Number of training stories:', len(train))
+print('Number of test stories:', len(test))
 print('-')
 print('Here\'s what a "story" tuple looks like (input, query, answer):')
-print(train_stories[0])
+print(train[0])
 print('-')
 print('Vectorizing the word sequences...')
 
 word_idx = dict((c, i + 1) for i, c in enumerate(vocab))
-inputs_train, queries_train, answers_train = vectorize_stories(train_stories, word_idx, story_maxlen, query_maxlen)
-inputs_test, queries_test, answers_test = vectorize_stories(test_stories, word_idx, story_maxlen, query_maxlen)
+inputs_train, queries_train, answers_train = vectorize_stories(train, word_idx, story_maxlen, query_maxlen)
+inputs_test, queries_test, answers_test = vectorize_stories(test, word_idx, story_maxlen, query_maxlen)
 
 print('-')
 print('inputs: integer tensor of shape (samples, max_length)')
