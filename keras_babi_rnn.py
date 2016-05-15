@@ -61,6 +61,7 @@ from functools import reduce
 
 import numpy as np
 np.random.seed(1337)  # for reproducibility
+from loadGloVe import build_word_vector_matrix
 
 from keras.utils.data_utils import get_file
 from keras.layers.embeddings import Embedding
@@ -70,7 +71,7 @@ from keras.models import Sequential
 from data_utils.babi import *
 
 RNN = recurrent.LSTM
-EMBED_HIDDEN_SIZE = 50
+EMBED_HIDDEN_SIZE = 50		# word size?
 SENT_HIDDEN_SIZE = 100
 QUERY_HIDDEN_SIZE = 100
 BATCH_SIZE = 32
@@ -78,21 +79,30 @@ EPOCHS = 12
 print('RNN / Embed / Sent / Query = {}, {}, {}, {}'.format(RNN, EMBED_HIDDEN_SIZE, SENT_HIDDEN_SIZE, QUERY_HIDDEN_SIZE))
 
 path = './data/babi/'
-challenge = path+'en/qa1_single-supporting-fact_{}.txt'
-train = get_stories(open(challenge.format('train'),'r'))
+challenge = path+'en/qa3_three-supporting-facts_{}.txt'
+train = get_stories(open(challenge.format('train'),'r'))		#train
+#print(train)
 test = get_stories(open(challenge.format('test'),'r'))
 
-vocab = sorted(reduce(lambda x, y: x | y, (set(story + q + [answer]) for story, q, answer in train + test)))
+#vocab = sorted(reduce(lambda x, y: x | y, (set(story + q + [answer]) for story, q, answer in train + test)))
 # Reserve 0 for masking via pad_sequences
-vocab_size = len(vocab) + 1
-word_idx = dict((c, i + 1) for i, c in enumerate(vocab))
+vocab_size = 40000#len(vocab) + 1
+#print(vocab_size)
+# vocabulory, could be replaced by GloVe
+### Loading Glove pretrained dict and weights ###
+embedding_weights, word_idx  = build_word_vector_matrix('./data/glove.6B/glove.6B.50d.txt', vocab_size - 1)
+
+### Loading end ###
+# word_idx = dict((c, i + 1) for i, c in enumerate(vocab))
+#print(word_idx)
+# index_dict
 story_maxlen = max(map(len, (x for x, _, _ in train + test)))
 query_maxlen = max(map(len, (x for _, x, _ in train + test)))
 
 X, Xq, Y = vectorize_stories(train, word_idx, story_maxlen, query_maxlen)
 tX, tXq, tY = vectorize_stories(test, word_idx, story_maxlen, query_maxlen)
 
-print('vocab = {}'.format(vocab))
+#print('vocab = {}'.format(vocab))
 print('X.shape = {}'.format(X.shape))
 print('Xq.shape = {}'.format(Xq.shape))
 print('Y.shape = {}'.format(Y.shape))
@@ -102,12 +112,12 @@ print('Build model...')
 
 sentrnn = Sequential()
 sentrnn.add(Embedding(vocab_size, EMBED_HIDDEN_SIZE,
-                      input_length=story_maxlen))
+                      input_length=story_maxlen, weights=[embedding_weights])) #mask_zero=True, 
 sentrnn.add(Dropout(0.3))
 
 qrnn = Sequential()
 qrnn.add(Embedding(vocab_size, EMBED_HIDDEN_SIZE,
-                   input_length=query_maxlen))
+                   input_length=query_maxlen, weights=[embedding_weights]))#mask_zero=True, 
 qrnn.add(Dropout(0.3))
 qrnn.add(RNN(EMBED_HIDDEN_SIZE, return_sequences=False))
 qrnn.add(RepeatVector(story_maxlen))
