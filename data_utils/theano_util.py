@@ -2,10 +2,31 @@ import numpy as np
 import re, sys
 import theano
 import theano.tensor as T
-from keras.utils.theano_utils import shared_zeros
 
 dtype=theano.config.floatX
 
+''' this is copied from https://github.com/cesc-park/CRCN/blob/master/keras/keras/utils/theano_utils.py. the lastest keras has disabled theano_utils. '''
+
+def floatX(X):
+    return np.asarray(X, dtype=theano.config.floatX)
+
+def sharedX(X, dtype=theano.config.floatX, name=None):
+    return theano.shared(np.asarray(X, dtype=dtype), name=name)
+
+def shared_zeros(shape, dtype=theano.config.floatX, name=None):
+    return sharedX(np.zeros(shape), dtype=dtype, name=name)
+
+def shared_scalar(val=0., dtype=theano.config.floatX, name=None):
+    return theano.shared(np.cast[dtype](val))
+
+def shared_ones(shape, dtype=theano.config.floatX, name=None):
+    return sharedX(np.ones(shape), dtype=dtype, name=name)
+
+def alloc_zeros_matrix(*dims):
+    return T.alloc(np.cast[theano.config.floatX](0.), *dims)
+   
+''' end of keras.utils.theano_utils  '''
+    
 def init_shared_normal(num_rows, num_cols, scale=1):
     '''Initialize a matrix shared variable with normally distributed
     elements.'''

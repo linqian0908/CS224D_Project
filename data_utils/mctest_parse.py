@@ -9,6 +9,7 @@ from theano_util import (
 
 from pos_pruning import prune_statements
 
+## adapted from parparthshah's mctest_dataset_parser_v2.py
 def only_words(line):
     ps = re.sub(r'[^a-zA-Z0-9\']', r' ', line)
     ws = re.sub(r'(\W)', r' \1 ', ps) # Put spaces around punctuations
@@ -181,6 +182,7 @@ def parse_mc_test_dataset(questions_file, answers_file, word_id=0, word_to_id={}
 
             article_no = len(questions)
             questions.append([article_no, -1, statements, q_words, correct, options_word_ids])
+            # questions[2]: story; questions[3]: question; question[5]: correct answer in word
 
     print "There are %d questions" % len(questions)
     print "There are %d statements" % len(dataset)
@@ -227,6 +229,7 @@ def parse_mc_test_dataset(questions_file, answers_file, word_id=0, word_to_id={}
 
 
     print("Final processing...")
+    # change questions from word to index
     questions_seq = map(lambda x: transform_ques_weak(x, word_to_id, word_id), questions)
     return dataset, questions_seq, word_to_id, word_id, null_word_id, max_stmts, max_words
 
@@ -258,7 +261,10 @@ if __name__ == "__main__":
     print "Train file:", train_file
 
     train_answers = train_file.replace('tsv', 'ans')
-
+    
+    dev_file = train_file.replace('train','dev')
+    dev_answers = dev_file.replace('tsv','ans')
+    
     test_file = train_file.replace('train', 'test')
     test_answers = test_file.replace('tsv', 'ans')
 
@@ -267,6 +273,9 @@ if __name__ == "__main__":
     train_obj = parse_mc_test_dataset(os.path.join(data_dir, train_file), os.path.join(data_dir, train_answers), pad=ADD_PADDING, add_pruning=ADD_PRUNING)
     num_words = train_obj[3]
     word_to_id = train_obj[2]
+    dev_obj = parse_mc_test_dataset(os.path.join(data_dir, dev_file),os.path.join(data_dir, dev_answers),word_id=num_words, word_to_id=word_to_id, update_word_ids=True, pad=ADD_PADDING, add_pruning=ADD_PRUNING)    
+    num_words = dev_obj[3]
+    word_to_id = dev_obj[2]
     test_obj = parse_mc_test_dataset(os.path.join(data_dir, test_file), os.path.join(data_dir, test_answers), word_id=num_words, word_to_id=word_to_id, update_word_ids=True, pad=ADD_PADDING, add_pruning=ADD_PRUNING)
     num_words = test_obj[3]
     word_to_id = test_obj[2]
@@ -288,7 +297,13 @@ if __name__ == "__main__":
     f = file(os.path.join(data_dir, train_pickle), 'wb')
     cPickle.dump(train_obj, f, protocol=cPickle.HIGHEST_PROTOCOL)
     f.close()
-
+    
+    dev_pickle = dev_file.replace('tsv','pickle')
+    print("Pickling train... " + dev_pickle)
+    f = file(os.path.join(data_dir, dev_pickle), 'wb')
+    cPickle.dump(dev_obj, f, protocol=cPickle.HIGHEST_PROTOCOL)
+    f.close()
+    
     test_pickle = test_file.replace('tsv', 'pickle')
     print("Pickling test... " + test_pickle)
     f = file(os.path.join(data_dir, test_pickle), 'wb')
