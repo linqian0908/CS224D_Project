@@ -1,3 +1,4 @@
+## adapted from parparthshah's mctest_dataset_parser_v2.py
 import re
 import sys, os
 import cPickle
@@ -9,7 +10,6 @@ from theano_util import (
 
 from pos_pruning import prune_statements
 
-## adapted from parparthshah's mctest_dataset_parser_v2.py
 def only_words(line):
     ps = re.sub(r'[^a-zA-Z0-9\']', r' ', line)
     ws = re.sub(r'(\W)', r' \1 ', ps) # Put spaces around punctuations
