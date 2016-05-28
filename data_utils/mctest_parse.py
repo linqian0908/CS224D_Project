@@ -60,7 +60,7 @@ def transform_ques_weak(question, word_to_id, num_words):
     question[5] = map(lambda l: map(lambda x: word_to_id[x], l), question[5])
     return question
 
-def parse_mc_test_dataset(questions_file, answers_file, word_id=0, word_to_id={}, update_word_ids=True, pad=True, add_pruning=False):
+def parse_mc_test_dataset(questions_file, answers_file, word_id=0, word_to_id={}, update_word_ids=True, pad=True, add_pruning=False, debug=False):
     dataset = []
     questions = []
 
@@ -86,7 +86,8 @@ def parse_mc_test_dataset(questions_file, answers_file, word_id=0, word_to_id={}
 
     more_than_1_word_answers = 0
     answer_word_unknown = 0
-
+    
+    print_text=False
     for i in xrange(len(questions_data)):
         question_line = questions_data[i]
         answer_line = answers_data[i]
@@ -98,9 +99,17 @@ def parse_mc_test_dataset(questions_file, answers_file, word_id=0, word_to_id={}
         assert(len(answer_pieces) == 4)
 
         text = question_pieces[2]
+        if re.match('\\newline',text):
+            print_text=True
+            if debug:
+                print text
         text = text.replace('\\newline', ' ')
         sentences = get_sentences(text)
-
+        
+        if debug and print_text:
+            print text
+            print sentences
+            
         statements = []
         for s in sentences:
             tokens = s.strip().split()
@@ -150,7 +159,10 @@ def parse_mc_test_dataset(questions_file, answers_file, word_id=0, word_to_id={}
 
             if q_words[0] == 'multiple' or q_words[0] == 'one':
                 del q_words[0]
-
+            
+            if debug:
+                print q_words
+                
             # Ignore questions with unknown words in the answer
             options_word_ids = []
             skip = False
@@ -227,7 +239,6 @@ def parse_mc_test_dataset(questions_file, answers_file, word_id=0, word_to_id={}
             for j in xrange(len(q[5])):
                 q[5][j] = pad_statement(q[5][j], null_word, max_words)
 
-
     print("Final processing...")
     # change questions from word to index
     questions_seq = map(lambda x: transform_ques_weak(x, word_to_id, word_id), questions)
@@ -250,6 +261,7 @@ def parse_stop_words(stop_file, word_id=0, word_to_id={}, update_word_ids=False)
 if __name__ == "__main__":
     ADD_PADDING = True
     ADD_PRUNING = False
+    DEBUG = False
     # Consider padding from the other side
 
     if len(sys.argv) > 2:
@@ -270,13 +282,13 @@ if __name__ == "__main__":
 
     data_dir = sys.argv[1]
 
-    train_obj = parse_mc_test_dataset(os.path.join(data_dir, train_file), os.path.join(data_dir, train_answers), pad=ADD_PADDING, add_pruning=ADD_PRUNING)
+    train_obj = parse_mc_test_dataset(os.path.join(data_dir, train_file), os.path.join(data_dir, train_answers), pad=ADD_PADDING, add_pruning=ADD_PRUNING, debug=DEBUG)
     num_words = train_obj[3]
     word_to_id = train_obj[2]
-    dev_obj = parse_mc_test_dataset(os.path.join(data_dir, dev_file),os.path.join(data_dir, dev_answers),word_id=num_words, word_to_id=word_to_id, update_word_ids=True, pad=ADD_PADDING, add_pruning=ADD_PRUNING)    
+    dev_obj = parse_mc_test_dataset(os.path.join(data_dir, dev_file),os.path.join(data_dir, dev_answers),word_id=num_words, word_to_id=word_to_id, update_word_ids=True, pad=ADD_PADDING, add_pruning=ADD_PRUNING, debug=DEBUG)    
     num_words = dev_obj[3]
     word_to_id = dev_obj[2]
-    test_obj = parse_mc_test_dataset(os.path.join(data_dir, test_file), os.path.join(data_dir, test_answers), word_id=num_words, word_to_id=word_to_id, update_word_ids=True, pad=ADD_PADDING, add_pruning=ADD_PRUNING)
+    test_obj = parse_mc_test_dataset(os.path.join(data_dir, test_file), os.path.join(data_dir, test_answers), word_id=num_words, word_to_id=word_to_id, update_word_ids=True, pad=ADD_PADDING, add_pruning=ADD_PRUNING, debug=DEBUG)
     num_words = test_obj[3]
     word_to_id = test_obj[2]
 
