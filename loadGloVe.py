@@ -4,9 +4,38 @@ import sys, codecs
 import numpy as np
 import time
 
+def find_word_vector_matrix(vector_file, vocab, vocab_dim):
+  '''Read a GloVe array from sys.argv[1] and return its vectors and labels as arrays'''
+  # vocab_dim = 50 embed_size of your word vectors
+  # vocab list of words
+  embedding_weights = np.zeros((1, vocab_dim))
+  start = time.time()
+      
+  word_vectors = []
+  #labels_array = []
+  
+  index_dict = {}
+  for i, word in enumerate(vocab):
+    index_dict[word] = i+1 # adding 1 to account for 0th index (for masking)dict((c, i + 1) )
+    with codecs.open(vector_file, 'r', 'utf-8') as f:
+      for c, r in enumerate(f):
+        sr = r.split()
+        if sr[0] == word.lower():
+          word_vectors.append( np.array([float(i) for i in sr[1:]]))
+          break
+        #embedding_weights = np.append(embedding_weights, [np.array([float(i) for i in sr[1:]])], axis = 0)
+      #if c == n_words - 1:
+       # break
+        #return np.array( numpy_arrays ), index_dict#abels_array
+  embedding_weights = np.append(embedding_weights, np.array(word_vectors), axis = 0)
+  print 'Total loading time: {}'.format(time.time() - start)
+  #n_symbols = len(index_dict) + 1 
+  
+  return embedding_weights, index_dict#labels_array
+
 def build_word_vector_matrix(vector_file, n_words):
   '''Read a GloVe array from sys.argv[1] and return its vectors and labels as arrays'''
-  vocab_dim = 50 # dimensionality of your word vectors
+  vocab_dim = 50 # embed_size of your word vectors
   embedding_weights = np.zeros((1, vocab_dim))
   
   word_vectors = []

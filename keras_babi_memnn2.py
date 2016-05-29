@@ -17,7 +17,7 @@ from __future__ import print_function
 from functools import reduce
 
 import numpy as np
-from loadGloVe import build_word_vector_matrix
+from loadGloVe import build_word_vector_matrix, find_word_vector_matrix
 
 from keras.models import Sequential
 from keras.layers.embeddings import Embedding
@@ -28,13 +28,14 @@ from keras.preprocessing.sequence import pad_sequences
 
 from data_utils.babi import *
 path = './data/babi/'
-challenge = path+'en/qa1_single-supporting-fact_{}.txt'
+challenge = path+'en-10k/qa1_single-supporting-fact_{}.txt'
 train = get_stories(open(challenge.format('train'),'r'))
 test = get_stories(open(challenge.format('test'),'r'))
 
-#vocab = sorted(reduce(lambda x, y: x | y, (set(story + q + [answer]) for story, q, answer in train + test)))
+#
+vocab = sorted(reduce(lambda x, y: x | y, (set(story + q + [answer]) for story, q, answer in train + test)))
 # Reserve 0 for masking via pad_sequences
-vocab_size = 40000#len(vocab) + 1
+vocab_size = len(vocab) + 1#40000#
 story_maxlen = max(map(len, (x for x, _, _ in train + test)))
 query_maxlen = max(map(len, (x for _, x, _ in train + test)))
 
@@ -50,7 +51,8 @@ print(train[0])
 print('-')
 print('Vectorizing the word sequences...')
 
-embedding_weights, word_idx  = build_word_vector_matrix('./data/glove.6B/glove.6B.50d.txt', vocab_size - 1)
+EMBED_HIDDEN_SIZE = 50
+embedding_weights, word_idx  = find_word_vector_matrix('./data/glove.6B/glove.6B.50d.txt', vocab, EMBED_HIDDEN_SIZE)
 #word_idx = dict((c, i + 1) for i, c in enumerate(vocab))
 inputs_train, queries_train, answers_train = vectorize_stories(train, word_idx, story_maxlen, query_maxlen)
 inputs_test, queries_test, answers_test = vectorize_stories(test, word_idx, story_maxlen, query_maxlen)
@@ -73,15 +75,15 @@ print('Compiling...')
 # embed the input sequence into a sequence of vectors
 input_encoder_m = Sequential()
 input_encoder_m.add(Embedding(input_dim=vocab_size,
-                              output_dim=50,
-                              input_length=story_maxlen, weights=[embedding_weights]))
+                              output_dim=EMBED_HIDDEN_SIZE,
+                              input_length=story_maxlen, weights=[embedding_weights]))  #
 input_encoder_m.add(Dropout(0.3))
 # output: (samples, story_maxlen, embedding_dim)
 # embed the question into a sequence of vectors
 question_encoder = Sequential()
 question_encoder.add(Embedding(input_dim=vocab_size,
-                               output_dim=50,
-                               input_length=query_maxlen, weights=[embedding_weights]))
+                               output_dim=EMBED_HIDDEN_SIZE,
+                               input_length=query_maxlen, weights=[embedding_weights])) #
 question_encoder.add(Dropout(0.3))
 # output: (samples, query_maxlen, embedding_dim)
 # compute a 'match' between input sequence elements (which are vectors)

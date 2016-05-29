@@ -68,10 +68,10 @@ def vectorize_stories(data, word_idx, story_maxlen, query_maxlen):
     Xq = []
     Y = []
     for story, query, answer in data:
-        x = [word_idx[w.lower()] for w in story]
-        xq = [word_idx[w.lower()] for w in query]
+        x = [word_idx[w] for w in story]    #.lower()
+        xq = [word_idx[w] for w in query]   #.lower()
         y = np.zeros(len(word_idx) + 1)  # let's not forget that index 0 is reserved
-        y[word_idx[answer.lower()]] = 1
+        y[word_idx[answer]] = 1     #.lower()
         X.append(x)
         Xq.append(xq)
         Y.append(y)
