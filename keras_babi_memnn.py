@@ -17,7 +17,7 @@ from __future__ import print_function
 from functools import reduce
 
 import numpy as np
-from loadGloVe import build_word_vector_matrix
+from data_utils.loadGloVe import build_word_vector_matrix
 
 from keras.models import Sequential
 from keras.layers.embeddings import Embedding

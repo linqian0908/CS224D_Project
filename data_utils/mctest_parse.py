@@ -2,6 +2,7 @@
 import re
 import sys, os
 import cPickle
+from loadGloVe import find_word_vector_matrix2
 
 from theano_util import (
     pad_memories,
@@ -263,7 +264,8 @@ if __name__ == "__main__":
     ADD_PRUNING = False
     DEBUG = False
     # Consider padding from the other side
-
+    
+    data_dir = sys.argv[1]
     if len(sys.argv) > 2:
         dataset = sys.argv[2]
     else:
@@ -271,16 +273,11 @@ if __name__ == "__main__":
 
     train_file = dataset + '.train.tsv'
     print "Train file:", train_file
-
     train_answers = train_file.replace('tsv', 'ans')
-    
     dev_file = train_file.replace('train','dev')
     dev_answers = dev_file.replace('tsv','ans')
-    
     test_file = train_file.replace('train', 'test')
     test_answers = test_file.replace('tsv', 'ans')
-
-    data_dir = sys.argv[1]
 
     train_obj = parse_mc_test_dataset(os.path.join(data_dir, train_file), os.path.join(data_dir, train_answers), pad=ADD_PADDING, add_pruning=ADD_PRUNING, debug=DEBUG)
     num_words = train_obj[3]
@@ -291,15 +288,10 @@ if __name__ == "__main__":
     test_obj = parse_mc_test_dataset(os.path.join(data_dir, test_file), os.path.join(data_dir, test_answers), word_id=num_words, word_to_id=word_to_id, update_word_ids=True, pad=ADD_PADDING, add_pruning=ADD_PRUNING, debug=DEBUG)
     num_words = test_obj[3]
     word_to_id = test_obj[2]
-
-    # Add dev to test
-    # test2_file = train_file.replace('train', 'dev')
-    # test2_answers = test2_file.replace('tsv', 'ans')
-    # test2_obj = parse_mc_test_dataset(os.path.join(data_dir, test2_file), os.path.join(data_dir, test2_answers), word_id=num_words, word_to_id=word_to_id, update_word_ids=True, pad=ADD_PADDING, add_pruning=ADD_PRUNING)
-
-    #test_obj[0] += test2_obj[0]
-    #test_obj[1] += test2_obj[1]
-
+    
+    ## load embedding from GloVe
+    embedding_weights = find_word_vector_matrix2('../data/glove.6B/glove.6B.50d.txt', word_to_id, num_words, 50)
+    
     stop_file = 'stopwords.txt'
     stop_obj = parse_stop_words(os.path.join(data_dir, stop_file), word_id=num_words, word_to_id=word_to_id)
 
@@ -311,7 +303,7 @@ if __name__ == "__main__":
     f.close()
     
     dev_pickle = dev_file.replace('tsv','pickle')
-    print("Pickling train... " + dev_pickle)
+    print("Pickling dev... " + dev_pickle)
     f = file(os.path.join(data_dir, dev_pickle), 'wb')
     cPickle.dump(dev_obj, f, protocol=cPickle.HIGHEST_PROTOCOL)
     f.close()
@@ -321,7 +313,13 @@ if __name__ == "__main__":
     f = file(os.path.join(data_dir, test_pickle), 'wb')
     cPickle.dump(test_obj, f, protocol=cPickle.HIGHEST_PROTOCOL)
     f.close()
-
+    
+    embed_pickle = train_pickle.replace('train','embed')
+    print("Pickling embed..." + embed_pickle)
+    f = file(os.path.join(data_dir, embed_pickle), 'wb')
+    cPickle.dump(embedding_weights, f, protocol=cPickle.HIGHEST_PROTOCOL)
+    f.close()
+    
     stop_pickle = stop_file.replace('txt', 'pickle')
     print("Pickling stop words... " + stop_pickle)
     f = file(os.path.join(data_dir, stop_pickle), 'wb')

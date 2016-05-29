@@ -61,7 +61,7 @@ from functools import reduce
 
 import numpy as np
 np.random.seed(1337)  # for reproducibility
-from loadGloVe import build_word_vector_matrix
+from data_utils.loadGloVe import build_word_vector_matrix
 
 from keras.utils.data_utils import get_file
 from keras.layers.embeddings import Embedding

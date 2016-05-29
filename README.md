@@ -39,6 +39,9 @@ Ignored 0 questions which had an unknown answer word
 Max statement length:  48
 Max number of statements:  44
 Final processing...
+loanding embedding from GloVe...
+Total loading time: 4.5053460598
+Words loaded from Glove: 4366
 Pickling train... mc500.train.pickle
 Pickling train... mc500.dev.pickle
 Pickling test... mc500.test.pickle
@@ -73,6 +76,9 @@ Ignored 0 questions which had an unknown answer word
 Max statement length:  54
 Max number of statements:  41
 Final processing...
+loanding embedding from GloVe...
+Total loading time: 4.48507595062
+Words loaded from Glove: 2954
 Pickling train... mc160.train.pickle
 Pickling train... mc160.dev.pickle
 Pickling test... mc160.test.pickle

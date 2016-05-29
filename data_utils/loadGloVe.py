@@ -33,6 +33,24 @@ def find_word_vector_matrix(vector_file, vocab, vocab_dim):
   
   return embedding_weights, index_dict#labels_array
 
+def find_word_vector_matrix2(vector_file, word_to_id, n_words, vocab_dim):
+  '''Given a word-to-id dictionary, return embedding initialized to Glove. word not found in Glove will be initialized to 0'''
+  embedding_weights = np.zeros((n_words, vocab_dim))
+  print 'loanding embedding from GloVe...'
+  start = time.time()
+  found_word = 0
+  with codecs.open(vector_file, 'r', 'utf-8') as f:
+    for c, r in enumerate(f):
+      sr = r.split()
+      if sr[0] in word_to_id:
+        embedding_weights[word_to_id[sr[0]]] = np.array([float(i) for i in sr[1:]])
+        found_word += 1
+          
+  print 'Total loading time: {}'.format(time.time() - start)
+  print 'Words loaded from Glove: {}'.format(found_word)
+  #n_symbols = len(index_dict) + 1  
+  return embedding_weights
+  
 def build_word_vector_matrix(vector_file, n_words):
   '''Read a GloVe array from sys.argv[1] and return its vectors and labels as arrays'''
   vocab_dim = 50 # embed_size of your word vectors

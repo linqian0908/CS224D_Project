@@ -39,7 +39,8 @@ if __name__ == "__main__":
     train_file = sys.argv[1]
     dev_file = train_file.replace('train','dev')
     test_file = train_file.replace('train', 'test')
-
+    embed_file = train_file.replace('train','embed')
+    
     print("Loading pickled train dataset")
     f = file(train_file, 'rb')
     obj = cPickle.load(f)
@@ -54,6 +55,10 @@ if __name__ == "__main__":
     f = file(test_file, 'rb')
     obj = cPickle.load(f)
     test_dataset, test_questions, word_to_id, num_words, _, _, _ = obj
+    
+    print("Loading embedding")
+    f = file(embed_file,'rb')
+    embedding_weights = cPickle.load(f)
     
     print('null_word_id:', null_word_id)
     
@@ -82,11 +87,11 @@ if __name__ == "__main__":
 
     print('Build model...')
     batch_size = 10
-    in_embedding_size = 100
+    in_embedding_size = embedding_weights.shape[1]
     out_embedding_size = 100
 
     model = Sequential()
-    model.add(Embedding(num_words, in_embedding_size))
+    model.add(Embedding(num_words, in_embedding_size,weights=[embedding_weights]))
     model.add(LSTM(out_embedding_size))
     model.add(Dropout(0.5))
     model.add(Dense(num_words))
