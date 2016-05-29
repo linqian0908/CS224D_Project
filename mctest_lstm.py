@@ -43,7 +43,7 @@ if __name__ == "__main__":
     print("Loading pickled train dataset")
     f = file(train_file, 'rb')
     obj = cPickle.load(f)
-    train_dataset, train_questions, word_to_id, num_words, null_word_id, _, _ = obj
+    train_dataset, train_questions, _, _, null_word_id, _, _ = obj
     
     print("Loading pickled development dataset")
     f = file(dev_file,'rb')
@@ -53,8 +53,10 @@ if __name__ == "__main__":
     print("Loading pickled test dataset")
     f = file(test_file, 'rb')
     obj = cPickle.load(f)
-    test_dataset, test_questions, _, _, _, _, _ = obj
-
+    test_dataset, test_questions, word_to_id, num_words, _, _, _ = obj
+    
+    print('null_word_id:', null_word_id)
+    
     nb_epoch = 10
     if len(sys.argv) > 2:
         nb_epoch = int(sys.argv[2])
@@ -96,7 +98,7 @@ if __name__ == "__main__":
     model.compile(loss='categorical_crossentropy', optimizer=rms_optimizer,metrics=['accuracy'])
 
     print("Train...")
-    model.fit(X_train, y_train_cat, batch_size=batch_size, nb_epoch=nb_epoch, validation_data=(X_dev,y_dev_cat))
+    model.fit(X_train, y_train_cat, batch_size=batch_size, nb_epoch=nb_epoch, validation_split=0.2)
     score = model.evaluate(X_test, y_test_cat, batch_size=batch_size)
     print('Test score:', score)
 
